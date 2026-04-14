@@ -1,23 +1,67 @@
 import { io } from "socket.io-client";
-import { useState , useEffect } from "react";
-const socket = io("http://localhost:3000");
-const ChatArea = () => {
-    const [message, setMessage] = useState("");
-    const [messages, setMessages] = useState([]);
+import { useState, useEffect, useRef } from "react";
 
-    useEffect(() => {
-        socket.on('receive-message' , (msg) => {
-          setMessages((prev) => [...prev, msg]);
-        });
-        return () => socket.off("receive-message");      
-    }, [])
-    const handleSend = () => {
-      if (!message) return;
-      socket.emit('user-message' , message);
-      setMessage("");
+const ChatArea = () => {
+  const socketRef = useRef(null);
+  const statusRef = useRef("connecting");
+
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [count, setCount] = useState(0);
+  const [status, setStatus] = useState("connecting");
+
+  useEffect(() => {
+  statusRef.current = status;
+}, [status]);
+
+  useEffect(() => {
+    socketRef.current = io("http://localhost:3000");
+
+    socketRef.current.on("receive-message", (msg) => {
+      if (statusRef.current !== "connected") return;
+      setMessages((prev) => [...prev, msg]);
+    });
+
+    socketRef.current.on("user-count", (count) => {
+      setCount(count);
+    });
+
+    socketRef.current.on("waiting", () => {
+      setMessages([]);
+      setStatus("waiting");
+    });
+
+    socketRef.current.on("matched", () => {
+      setMessages([]);
+      setStatus("connected");
+    });
+
+    socketRef.current.on("partner-disconnected", () => {
+      setMessages([]);
+      setStatus("waiting");
+    });
+
+    return () => {
+      socketRef.current.disconnect(); 
     };
+  }, []);
+
+  const handleSend = () => {
+    if (!message) return;
+    socketRef.current.emit("user-message", message);
+    setMessage("");
+  };
   return (
     <div className="p-4">
+      <div>
+         <p className="inline-block px-3 py-1 border rounded text-sm font-semibold">
+          🟢 {count} online
+        </p>
+        <p className="mb-2">
+          {status === "waiting" && "🔍 Searching for stranger..."}
+          {status === "connected" && "💬 Connected to stranger"}
+        </p>
+      </div>
       <h1 className="text-xl mb-4">Chat Here</h1>
 
       {/* Messages */}
@@ -26,7 +70,7 @@ const ChatArea = () => {
           <div 
           key={index} 
           className={`p-2 mb-2 rounded max-w-xs ${
-              msg.id === socket.id
+              msg.id === socketRef.current?.id
                 ? "bg-blue-500 text-white ml-auto"
                 : "bg-gray-300 text-black"
             }`}
@@ -59,7 +103,6 @@ const ChatArea = () => {
           Send
         </button>
         </form>
-       
       </div>
     </div>
   )
