@@ -1,8 +1,9 @@
 import ChatArea from "./components/ChatArea"
+import VideoArea from "./components/VideoArea"
 const App = () => {
   return (
     <div>
-      <div className="h-100"></div>
+     
       <ChatArea/>
     </div>
   )

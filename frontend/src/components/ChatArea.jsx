@@ -1,9 +1,29 @@
 import { io } from "socket.io-client";
 import { useState, useEffect, useRef } from "react";
-
+import VideoArea from "./VideoArea";
+import { fetchUserMedia } from "../utils/webrtc";
 const ChatArea = () => {
   const socketRef = useRef(null);
   const statusRef = useRef("connecting");
+
+
+  // video start
+  const myVideoRef = useRef(null)
+  const strangerVideoRef = useRef(null)
+  const localStreamRef = useRef(null)
+ 
+  useEffect(() => {
+    const startCamera = async () => {
+    const stream = await fetchUserMedia();
+    localStreamRef.current = stream;
+    if (myVideoRef.current){
+      myVideoRef.current.srcObject = localStreamRef.current;
+    }
+    };
+
+    startCamera();
+  }, []);
+  // video ends
 
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
@@ -46,24 +66,36 @@ const ChatArea = () => {
     };
   }, []);
 
+
   const handleSend = () => {
     if (!message) return;
     socketRef.current.emit("user-message", message);
     setMessage("");
   };
+  
   return (
-    <div className="p-4">
+    <div className="p-5">
+      <div className="flex justify-center w-full">
+          <p className="inline-block px-3 py-1 border rounded text-sm font-semibold">
+        🟢 {count} online
+          </p>
+      </div>
+        
       <div>
-         <p className="inline-block px-3 py-1 border rounded text-sm font-semibold">
-          🟢 {count} online
-        </p>
         <p className="mb-2">
           {status === "waiting" && "🔍 Searching for stranger..."}
           {status === "connected" && "💬 Connected to stranger"}
         </p>
       </div>
-      <h1 className="text-xl mb-4">Chat Here</h1>
 
+      {/* VideoArea start*/}
+         <VideoArea
+           myVideoRef={myVideoRef}
+           strangerVideoRef={strangerVideoRef}
+         />
+      {/* VideoArea ends*/}
+      
+      <h1 className="text-xl mb-4">Chat Here</h1>
       {/* Messages */}
       <div className="border h-60 overflow-y-auto p-2 mb-4">
         {messages.map((msg, index) => (
@@ -104,6 +136,7 @@ const ChatArea = () => {
         </button>
         </form>
       </div>
+
     </div>
   )
 }

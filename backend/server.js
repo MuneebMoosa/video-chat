@@ -40,13 +40,13 @@ io.on('connection', (socket) => {
     // notify both
     io.to(roomId).emit("matched");
   }else{
-    // if noo one in room
+    // if no one in room
     waitingUsers.push(socket);
     socket.emit('waiting');
 
      console.log("User added to queue:", socket.id);
   }
-  // send count when users connect
+  // send count when users connect to all people
   io.emit('user-count' , onlineUsers)
 
   socket.on('user-message', (msg) => {
