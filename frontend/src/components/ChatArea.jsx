@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 import { useState, useEffect, useRef } from "react";
 import VideoArea from "./VideoArea";
-import { fetchUserMedia } from "../utils/webrtc";
+import { createOffer, createPeerConnection, fetchUserMedia } from "../utils/webrtc";
 const ChatArea = () => {
   const socketRef = useRef(null);
   const statusRef = useRef("connecting");
@@ -11,14 +11,14 @@ const ChatArea = () => {
   const myVideoRef = useRef(null)
   const strangerVideoRef = useRef(null)
   const localStreamRef = useRef(null)
- 
+  const peerConnectionRef = useRef(null)
   useEffect(() => {
     const startCamera = async () => {
-    const stream = await fetchUserMedia();
-    localStreamRef.current = stream;
-    if (myVideoRef.current){
-      myVideoRef.current.srcObject = localStreamRef.current;
-    }
+      const stream = await fetchUserMedia();
+      localStreamRef.current = stream;
+      if (myVideoRef.current){
+        myVideoRef.current.srcObject = localStreamRef.current;
+      }
     };
 
     startCamera();
@@ -51,10 +51,39 @@ const ChatArea = () => {
       setStatus("waiting");
     });
 
-    socketRef.current.on("matched", () => {
+    socketRef.current.on("matched", async (data) => {
       setMessages([]);
       setStatus("connected");
+      const peerConnection = createPeerConnection();
+
+      if (!localStreamRef.current) {
+        console.log("stream not ready");
+        return;
+      }
+
+      localStreamRef.current.getTracks().forEach((track) => {
+        peerConnection.addTrack(track, localStreamRef.current);
+      });
+
+      peerConnectionRef.current = peerConnection;
+
+      if(data.initiator == true){
+        const offer = await createOffer(peerConnection);
+        socketRef.current.emit("offer" , offer)
+      }
+      
     });
+
+    socketRef.current.on("offer" ,  async (offer) => {
+      const peerConnection = peerConnectionRef.current;
+      const answer = await handleOffer(peerConnection , offer);
+      socketRef.current.emit("answer", answer)
+    })
+
+    socketRef.current.on("answer" ,  async (answer) => {
+      const peerConnection = peerConnectionRef.current;
+      await handleAnswer(peerConnection , answer);
+    })
 
     socketRef.current.on("partner-disconnected", () => {
       setMessages([]);

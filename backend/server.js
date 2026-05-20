@@ -37,8 +37,14 @@ io.on('connection', (socket) => {
 
     console.log("Matched:", socket.id, "with", partner.id);
 
-    // notify both
-    io.to(roomId).emit("matched");
+    // notify both with initiator role
+    partner.emit("matched", {
+      initiator: true,
+    });
+
+    socket.emit("matched", {
+      initiator: false,
+    });
   }else{
     // if no one in room
     waitingUsers.push(socket);
@@ -62,6 +68,20 @@ io.on('connection', (socket) => {
      }
 
     })
+  socket.on("offer", (offer) => {
+    const roomId = socket.roomId;
+
+    if (roomId) {
+      socket.to(roomId).emit("offer", offer);
+    }
+  });
+
+  socket.on("answer" , (answer) => {
+    const roomId = socket.roomId;
+    if(roomId){
+      socket.to(roomId).emit("answer" , answer);
+    }
+  })
   console.log('a user connected' , socket.id);
 
   // when user disconnect
@@ -103,7 +123,13 @@ io.on('connection', (socket) => {
           partnerSocket.roomId = roomId;
           newPartner.roomId = roomId;
 
-          io.to(roomId).emit("matched");
+          partnerSocket.emit("matched", {
+            initiator: true,
+          });
+
+          newPartner.emit("matched", {
+            initiator: false,
+          });
 
           console.log("Re-matched:", partnerSocket.id, newPartner.id);
         } else {
