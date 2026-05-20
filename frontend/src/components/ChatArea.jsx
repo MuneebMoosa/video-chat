@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 import { useState, useEffect, useRef } from "react";
 import VideoArea from "./VideoArea";
-import { createOffer, createPeerConnection, fetchUserMedia } from "../utils/webrtc";
+import { addIceCandidate, createOffer, createPeerConnection, fetchUserMedia , handleIceCandidate , handleTrackEvent , handleOffer , handleAnswer } from "../utils/webrtc";
 const ChatArea = () => {
   const socketRef = useRef(null);
   const statusRef = useRef("connecting");
@@ -12,9 +12,21 @@ const ChatArea = () => {
   const strangerVideoRef = useRef(null)
   const localStreamRef = useRef(null)
   const peerConnectionRef = useRef(null)
+  const pendingCandidatesRef = useRef([]);
+  const pendingOfferRef = useRef(null)
   useEffect(() => {
     const startCamera = async () => {
+       console.log(
+        "starting camera"
+      );
       const stream = await fetchUserMedia();
+      console.log(
+        "camera ready"
+      );
+       console.log(
+      "local audio tracks:",
+      stream.getAudioTracks()
+    );
       localStreamRef.current = stream;
       if (myVideoRef.current){
         myVideoRef.current.srcObject = localStreamRef.current;
@@ -52,31 +64,81 @@ const ChatArea = () => {
     });
 
     socketRef.current.on("matched", async (data) => {
+      console.log(
+      "matched event"
+    );
+
       setMessages([]);
       setStatus("connected");
       const peerConnection = createPeerConnection();
 
-      if (!localStreamRef.current) {
-        console.log("stream not ready");
-        return;
+     if (!localStreamRef.current) {
+        console.log("waiting for stream...");
+
+        const stream = await fetchUserMedia();
+        
+        localStreamRef.current = stream;
+
+        if (myVideoRef.current) {
+          myVideoRef.current.srcObject = stream;
+        }
       }
 
+      console.log("stream:",localStreamRef.current);
+      
       localStreamRef.current.getTracks().forEach((track) => {
         peerConnection.addTrack(track, localStreamRef.current);
       });
 
       peerConnectionRef.current = peerConnection;
 
+      if (pendingOfferRef.current) {
+        console.log("processing saved offer");
+
+        const answer = await handleOffer(
+          peerConnection,
+          pendingOfferRef.current
+        );
+
+        for (const candidate of pendingCandidatesRef.current) {
+          await addIceCandidate(peerConnection, candidate);
+        }
+
+        pendingCandidatesRef.current = [];
+
+        socketRef.current.emit("answer", answer);
+
+        pendingOfferRef.current = null;
+      }
+
+      console.log("peer saved");
+
+      handleIceCandidate(peerConnection, socketRef.current); // ice candidate creation
+
+      handleTrackEvent(peerConnection,strangerVideoRef); // attach stranger video
       if(data.initiator == true){
         const offer = await createOffer(peerConnection);
         socketRef.current.emit("offer" , offer)
       }
       
     });
-
     socketRef.current.on("offer" ,  async (offer) => {
       const peerConnection = peerConnectionRef.current;
+
+      if (!peerConnection) {
+        console.log("saving offer for later");
+        pendingOfferRef.current = offer;
+        return;
+      }
+
       const answer = await handleOffer(peerConnection , offer);
+
+      for (const candidate of pendingCandidatesRef.current) {
+        await addIceCandidate(peerConnection, candidate);
+      }
+
+      pendingCandidatesRef.current = [];
+
       socketRef.current.emit("answer", answer)
     })
 
@@ -84,6 +146,29 @@ const ChatArea = () => {
       const peerConnection = peerConnectionRef.current;
       await handleAnswer(peerConnection , answer);
     })
+
+    socketRef.current.on("ice-candidate" , async (candidate) => {
+       const peerConnection = peerConnectionRef.current;
+        if (!peerConnection) {
+          console.log( "quewing candidate" );
+
+          pendingCandidatesRef.current.push(candidate);
+
+          return;
+      }
+      if ( !peerConnection .remoteDescription ) {
+        console.log(
+          "queueing candidate - remote description not ready"
+        );
+
+        pendingCandidatesRef
+          .current
+          .push(candidate);
+
+        return;
+      }
+       await addIceCandidate(peerConnection , candidate);
+    } )
 
     socketRef.current.on("partner-disconnected", () => {
       setMessages([]);

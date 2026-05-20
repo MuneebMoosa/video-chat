@@ -82,6 +82,13 @@ io.on('connection', (socket) => {
       socket.to(roomId).emit("answer" , answer);
     }
   })
+
+  socket.on("ice-candidate",(candidate) => {
+    const roomId = socket.roomId;
+    if(roomId){ 
+      socket.to(roomId).emit("ice-candidate",  candidate);
+    }
+  });
   console.log('a user connected' , socket.id);
 
   // when user disconnect
