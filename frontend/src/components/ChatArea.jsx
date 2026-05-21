@@ -20,13 +20,8 @@ const ChatArea = () => {
         "starting camera"
       );
       const stream = await fetchUserMedia();
-      console.log(
-        "camera ready"
-      );
-       console.log(
-      "local audio tracks:",
-      stream.getAudioTracks()
-    );
+      console.log("camera ready");
+       console.log( "local audio tracks:", stream.getAudioTracks() );
       localStreamRef.current = stream;
       if (myVideoRef.current){
         myVideoRef.current.srcObject = localStreamRef.current;
@@ -92,12 +87,14 @@ const ChatArea = () => {
 
       peerConnectionRef.current = peerConnection;
 
+      handleIceCandidate(peerConnection, socketRef.current);
+      handleTrackEvent(peerConnection, strangerVideoRef);
+      
       if (pendingOfferRef.current) {
         console.log("processing saved offer");
 
         const answer = await handleOffer(
-          peerConnection,
-          pendingOfferRef.current
+          peerConnection, pendingOfferRef.current
         );
 
         for (const candidate of pendingCandidatesRef.current) {

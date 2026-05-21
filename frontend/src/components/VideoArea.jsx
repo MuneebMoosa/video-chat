@@ -26,7 +26,6 @@
             <video
               autoPlay
               playsInline
-              controls
               className="w-full h-full object-cover"
               ref={strangerVideoRef}
             />
