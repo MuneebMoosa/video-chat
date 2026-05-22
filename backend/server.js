@@ -110,6 +110,8 @@ io.on('connection', (socket) => {
       delete pairs[socket.id];
 
       if (partnerSocket) {
+
+         partnerSocket.emit("partner-disconnected");
         // remove old room info
         partnerSocket.roomId = null;
 

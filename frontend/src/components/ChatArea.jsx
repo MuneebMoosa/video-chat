@@ -1,4 +1,5 @@
 import { io } from "socket.io-client";
+import { SkipForward, Camera, Mic } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import VideoArea from "./VideoArea";
 import { addIceCandidate, createOffer, createPeerConnection, fetchUserMedia , handleIceCandidate , handleTrackEvent , handleOffer , handleAnswer } from "../utils/webrtc";
@@ -6,6 +7,12 @@ const ChatArea = () => {
   const socketRef = useRef(null);
   const statusRef = useRef("connecting");
 
+  const handleSkip = () => {
+    cleanupConnection();
+    
+    socketRef.current.emit("next-user");
+      
+  }
 
   // video start
   const myVideoRef = useRef(null)
@@ -41,6 +48,25 @@ const ChatArea = () => {
   statusRef.current = status;
 }, [status]);
 
+const cleanupConnection = () => {
+  console.log("cleaning old connection");
+
+  // close peer connection
+  if (peerConnectionRef.current) {
+    peerConnectionRef.current.close();
+    peerConnectionRef.current = null;
+  }
+
+  // clear stranger video
+  if (strangerVideoRef.current) {
+    strangerVideoRef.current.srcObject = null;
+  }
+
+  // clear pending data
+  pendingCandidatesRef.current = [];
+  pendingOfferRef.current = null;
+};
+
   useEffect(() => {
     socketRef.current = io("http://localhost:3000");
 
@@ -59,12 +85,11 @@ const ChatArea = () => {
     });
 
     socketRef.current.on("matched", async (data) => {
-      console.log(
-      "matched event"
-    );
+      console.log("matched event");
 
       setMessages([]);
       setStatus("connected");
+      cleanupConnection();
       const peerConnection = createPeerConnection();
 
      if (!localStreamRef.current) {
@@ -168,11 +193,20 @@ const ChatArea = () => {
     } )
 
     socketRef.current.on("partner-disconnected", () => {
+      cleanupConnection();
       setMessages([]);
       setStatus("waiting");
     });
 
     return () => {
+      cleanupConnection();
+
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => {
+          track.stop();
+        });
+      }
+
       socketRef.current.disconnect(); 
     };
   }, []);
@@ -247,6 +281,26 @@ const ChatArea = () => {
         </button>
         </form>
       </div>
+      
+     <div className="flex gap-4 justify-center items-center">
+        {/* Skip Button */}
+        <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:opacity-90">
+          <SkipForward size={20} />
+          Skip
+        </button>
+
+        {/* Camera Button */}
+        <button className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:opacity-90">
+          <Camera  size={20} />
+          Camera
+        </button>
+
+        {/* Mic Button */}
+        <button className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:opacity-90">
+          <Mic size={20} />
+          Mic
+        </button>
+    </div>
 
     </div>
   )

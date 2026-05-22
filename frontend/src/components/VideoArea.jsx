@@ -4,7 +4,7 @@
     return (
       <div>
       {/* videochatarea start  */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[50vh] mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[50vh] mb-5">
 
         {/* Your Video */}
         <div className="relative bg-gray-900 rounded-xl overflow-hidden border">
