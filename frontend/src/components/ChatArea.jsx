@@ -1,9 +1,34 @@
 import { io } from "socket.io-client";
-import { SkipForward, Camera, Mic , MicOff } from "lucide-react";
+import { SkipForward, Camera, CameraOff, Mic , MicOff } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import VideoArea from "./VideoArea";
 import { addIceCandidate, createOffer, createPeerConnection, fetchUserMedia , handleIceCandidate , handleTrackEvent , handleOffer , handleAnswer } from "../utils/webrtc";
 const ChatArea = () => {
+  //camera mic on and off start
+  const [cameraOn, setCameraOn] = useState(true);
+  const [micOn, setMicOn] = useState(true);
+
+  const handleCameraToggle = () => {
+    const videoTrack = localStreamRef.current?.getVideoTracks()[0];
+
+    if (!videoTrack) return;
+
+    videoTrack.enabled = !videoTrack.enabled;
+
+    setCameraOn(videoTrack.enabled);
+  };
+
+  const handleMicToggle = () => {
+    const audioTrack = localStreamRef.current?.getAudioTracks()[0];
+
+    if(!audioTrack) return;
+    
+    audioTrack.enabled = !audioTrack.enabled;
+
+    setMicOn(audioTrack.enabled);
+  }
+  //camera mic on and off end
+
   const socketRef = useRef(null);
   const statusRef = useRef("connecting");
 
@@ -292,14 +317,26 @@ const cleanupConnection = () => {
         </button>
 
         {/* Camera Button */}
-        <button className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:opacity-90">
-          <Camera  size={20} />
+        <button className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:opacity-90"
+         onClick={handleCameraToggle}>
+          {cameraOn ? (
+              <Camera size={20} />
+            ) : (
+              <CameraOff size={20} />
+            )
+          }
           Camera
         </button>
 
         {/* Mic Button */}
-        <button className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:opacity-90">
-          <Mic size={20} />
+        <button className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:opacity-90"
+        onClick={handleMicToggle}>
+          {micOn ? (
+              <Mic size={20} />
+            ) : (
+              <MicOff size={20} />
+            )
+          }
           Mic
         </button>
     </div>
