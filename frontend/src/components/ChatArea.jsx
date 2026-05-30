@@ -30,6 +30,14 @@ const ChatArea = () => {
   }
   //camera mic on and off end
 
+  // const handleDisconnect = () => {
+  //   cleanupConnection();
+
+  //   setMessages([]);
+  //   setStatus("waiting");
+
+  //   socketRef.current.disconnect();
+  // }
   const socketRef = useRef(null);
   const statusRef = useRef("connecting");
 
@@ -259,21 +267,15 @@ const cleanupConnection = () => {
       </nav>
 
       <hr className="w-full border-t border-[var(--border-color)]" />
-      
-      {/* <div>
-        <p className="mb-2">
-          {status === "waiting" && "🔍 Searching for stranger..."}
-          {status === "connected" && "💬 Connected to stranger"}
-        </p>
-      </div> */}
-
 
       <div className="flex h-[calc(100vh-88px)]"> 
          <Sidepanel/>
-         <div className="flex flex-col flex-1 p-5 h-full">
+         <div className="flex flex-col flex-1 h-full">
+          <div className="p-5">
             <VideoArea
               myVideoRef={myVideoRef}
               strangerVideoRef={strangerVideoRef}
+              status={status}
             />
 
             <div className="rounded-xl border border-[var(--border-color)] flex flex-1 flex-col">
@@ -326,7 +328,8 @@ const cleanupConnection = () => {
                   </form>
                 </div>
             </div>
-            <div className="flex gap-4 justify-center items-center mt-3 bg-[var(--my-msg)] p-4">
+            </div>
+            <div className="flex gap-4 justify-center items-center  bg-[var(--my-msg)] h-full">
                 {/* Skip Button */}
                 <button className="flex flex-col items-center justify-center gap-1 px-2 py-2 bg-[var(--btn-color)] text-[var(--secondary-bg)] rounded-xl  w-25 h-15 cursor-pointer"
                 onClick={handleSkip}
@@ -365,19 +368,17 @@ const cleanupConnection = () => {
                   </span>
                 </button>
                 {/* disconnect */}
-                <button className="flex flex-col items-center justify-center gap-1 px-2 py-2 bg-[#690005] text-white rounded-xl  w-25 h-15 cursor-pointer">
+                <button className="flex flex-col items-center justify-center gap-1 px-2 py-2 bg-[#690005] text-white rounded-xl  w-25 h-15 cursor-pointer"
+                  // onClick={handleDisconnect}
+                >
                   <Phone size={20}/>
                   <span className="text-xs font-medium">
                     End
                   </span>
                 </button>
             </div>
-
-
-
-
-
          </div> 
+         
       </div>
     </div>
   )

@@ -3,7 +3,6 @@ import VideoArea from "./components/VideoArea"
 const App = () => {
   return (
     <div>
-     
       <ChatArea/>
     </div>
   )

@@ -1,6 +1,6 @@
   import React from 'react'
   
-  const VideoArea = ({myVideoRef,strangerVideoRef}) => {
+  const VideoArea = ({myVideoRef,strangerVideoRef,status}) => {
     return (
       <div>
       {/* videochatarea start  */}
@@ -23,6 +23,17 @@
 
         {/* Stranger Video */}
           <div className="relative bg-black rounded-xl overflow-hidden">
+            {status === "waiting" && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60 text-white">
+              
+              {/* Spinner */}
+              <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+
+              <p className="mt-4 text-lg font-medium">
+                Searching for stranger...
+              </p>
+            </div>
+          )}
             <video
               autoPlay
               playsInline
