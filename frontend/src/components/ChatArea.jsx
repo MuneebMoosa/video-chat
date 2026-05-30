@@ -102,8 +102,8 @@ const cleanupConnection = () => {
 };
 
   useEffect(() => {
-    socketRef.current = io("http://localhost:3000");
-
+   socketRef.current = io("http://localhost:3000");
+   
     socketRef.current.on("receive-message", (msg) => {
       if (statusRef.current !== "connected") return;
       setMessages((prev) => [...prev, msg]);

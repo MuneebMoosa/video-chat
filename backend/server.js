@@ -6,9 +6,10 @@ import { log } from "node:console";
 
 const app = express();
 const server = createServer(app);
+const PORT = process.env.PORT || 3000;
 const io = new Server( server,{
   cors: {
-    origin: ["http://localhost:5173", "http://frontend:5173"],
+    origin:  "*",
     }
   });
   
@@ -263,6 +264,6 @@ app.get('/', (req, res) => {
   res.send('hi');
 });
 // server connection
-server.listen(3000, () => {
-  console.log("Server running on port 3000");
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
