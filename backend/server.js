@@ -13,6 +13,7 @@ const io = new Server( server,{
         "http://localhost:4173",
         "https://pulse-chat-kappa.vercel.app/"
       ],
+      methods: ["GET", "POST"],
     }
   });
   
